@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.likebamboo.imagechooser.R;
 import com.likebamboo.imagechooser.loader.LocalImageLoader;
@@ -32,148 +33,152 @@ import java.util.ArrayList;
  * @author likebamboo
  */
 public class ImageListAdapter extends BaseAdapter {
-    /**
-     * 上下文对象
-     */
-    private Context mContext = null;
+	/**
+	 * 上下文对象
+	 */
+	private Context mContext = null;
 
-    /**
-     * 图片列表
-     */
-    private ArrayList<String> mDataList = new ArrayList<String>();
+	/**
+	 * 图片列表
+	 */
+	private ArrayList<String> mDataList = new ArrayList<String>();
 
-    /**
-     * 选中的图片列表
-     */
-    private ArrayList<String> mSelectedList = new ArrayList<String>();
+	/**
+	 * 选中的图片列表
+	 */
+	private ArrayList<String> mSelectedList = new ArrayList<String>();
 
-    /**
-     * 容器
-     */
-    private View mContainer = null;
+	/**
+	 * 容器
+	 */
+	private View mContainer = null;
 
-    public ImageListAdapter(Context context, ArrayList<String> list, View container) {
-        mDataList = list;
-        mContext = context;
-        mSelectedList = Util.getSeletedImages(context);
-        mContainer = container;
-    }
+	public ImageListAdapter(Context context, ArrayList<String> list, View container) {
+		mDataList = list;
+		mContext = context;
+		mSelectedList = Util.getSeletedImages(context);
+		mContainer = container;
+	}
 
-    @Override
-    public int getCount() {
-        return mDataList.size();
-    }
+	@Override
+	public int getCount() {
+		return mDataList.size();
+	}
 
-    @Override
-    public String getItem(int position) {
-        if (position < 0 || position > mDataList.size()) {
-            return null;
-        }
-        return mDataList.get(position);
-    }
+	@Override
+	public String getItem(int position) {
+		if (position < 0 || position > mDataList.size()) {
+			return null;
+		}
+		return mDataList.get(position);
+	}
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
 
-    @Override
-    public View getView(int position, View view, ViewGroup parent) {
-        final ViewHolder holder;
-        if (view == null) {
-            holder = new ViewHolder();
-            view = LayoutInflater.from(mContext).inflate(R.layout.image_list_item, null);
-            holder.mImageIv = (MyImageView)view.findViewById(R.id.list_item_iv);
-            holder.mClickArea = view.findViewById(R.id.list_item_cb_click_area);
-            holder.mSelectedCb = (CheckBox)view.findViewById(R.id.list_item_cb);
-            view.setTag(holder);
-        } else {
-            holder = (ViewHolder)view.getTag();
-        }
+	@Override
+	public View getView(int position, View view, ViewGroup parent) {
+		final ViewHolder holder;
+		if (view == null) {
+			holder = new ViewHolder();
+			view = LayoutInflater.from(mContext).inflate(R.layout.image_list_item, null);
+			holder.mImageIv = (MyImageView) view.findViewById(R.id.list_item_iv);
+			holder.mClickArea = view.findViewById(R.id.list_item_cb_click_area);
+			holder.mSelectedCb = (CheckBox) view.findViewById(R.id.list_item_cb);
+			view.setTag(holder);
+		} else {
+			holder = (ViewHolder) view.getTag();
+		}
 
-        final String path = getItem(position);
-        // 加载图片
-        holder.mImageIv.setTag(path);
-        // 加载图片
-        // 利用NativeImageLoader类加载本地图片
-        Bitmap bitmap = LocalImageLoader.getInstance().loadImage(path, holder.mImageIv.getPoint(),
-                new ImageCallBack() {
-                    @Override
-                    public void onImageLoader(Bitmap bitmap, String path) {
-                        ImageView mImageView = (ImageView)mContainer.findViewWithTag(path);
-                        if (bitmap != null && mImageView != null) {
-                            mImageView.setImageBitmap(bitmap);
-                        }
-                    }
-                });
-        if (bitmap != null) {
-            holder.mImageIv.setImageBitmap(bitmap);
-        } else {
-            holder.mImageIv.setImageResource(R.drawable.pic_thumb);
-        }
+		final String path = getItem(position);
+		// 加载图片
+		holder.mImageIv.setTag(path);
+		// 加载图片
+		// 利用NativeImageLoader类加载本地图片
+		Bitmap bitmap = LocalImageLoader.getInstance().loadImage(path, holder.mImageIv.getPoint(), new ImageCallBack() {
+			@Override
+			public void onImageLoader(Bitmap bitmap, String path) {
+				ImageView mImageView = (ImageView) mContainer.findViewWithTag(path);
+				if (bitmap != null && mImageView != null) {
+					mImageView.setImageBitmap(bitmap);
+				}
+			}
+		});
+		if (bitmap != null) {
+			holder.mImageIv.setImageBitmap(bitmap);
+		} else {
+			holder.mImageIv.setImageResource(R.drawable.pic_thumb);
+		}
 
-        holder.mSelectedCb.setChecked(false);
-        // 该图片是否选中
-        for (String selected : mSelectedList) {
-            if (selected.equals(path)) {
-                holder.mSelectedCb.setChecked(true);
-            }
-        }
+		holder.mSelectedCb.setChecked(false);
+		// 该图片是否选中
+		for (String selected : mSelectedList) {
+			if (selected.equals(path)) {
+				holder.mSelectedCb.setChecked(true);
+			}
+		}
 
-        // 可点区域单击事件
-        holder.mClickArea.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean checked = holder.mSelectedCb.isChecked();
-                holder.mSelectedCb.setChecked(!checked);
-                if (!checked) {
-                    addImage(path);
-                } else {
-                    deleteImage(path);
-                }
-            }
-        });
+		// 可点区域单击事件
+		holder.mClickArea.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				boolean checked = holder.mSelectedCb.isChecked();
 
-        return view;
-    }
+				if (!checked) {
+					if (mSelectedList.size() > 10) {
+						Toast.makeText(mContext, "最多选取10张", 1).show();
+						return;
+					}
+					addImage(path);
+				} else {
+					deleteImage(path);
+				}
+				holder.mSelectedCb.setChecked(!checked);
+			}
+		});
 
-    /**
-     * 将图片地址添加到已选择列表中
-     * 
-     * @param path
-     */
-    private void addImage(String path) {
-        if (mSelectedList.contains(path)) {
-            return;
-        }
-        mSelectedList.add(path);
-    }
+		return view;
+	}
 
-    /**
-     * 将图片地址从已选择列表中删除
-     * 
-     * @param path
-     */
-    private void deleteImage(String path) {
-        mSelectedList.remove(path);
-    }
+	/**
+	 * 将图片地址添加到已选择列表中
+	 * 
+	 * @param path
+	 */
+	private void addImage(String path) {
+		if (mSelectedList.contains(path)) {
+			return;
+		}
+		mSelectedList.add(path);
+	}
 
-    /**
-     * 获取已选中的图片列表
-     * 
-     * @return
-     */
-    public ArrayList<String> getSelectedImgs() {
-        return mSelectedList;
-    }
+	/**
+	 * 将图片地址从已选择列表中删除
+	 * 
+	 * @param path
+	 */
+	private void deleteImage(String path) {
+		mSelectedList.remove(path);
+	}
 
-    static class ViewHolder {
-        public MyImageView mImageIv;
+	/**
+	 * 获取已选中的图片列表
+	 * 
+	 * @return
+	 */
+	public ArrayList<String> getSelectedImgs() {
+		return mSelectedList;
+	}
 
-        public View mClickArea;
+	static class ViewHolder {
+		public MyImageView mImageIv;
 
-        public CheckBox mSelectedCb;
+		public View mClickArea;
 
-    }
+		public CheckBox mSelectedCb;
+
+	}
 
 }
